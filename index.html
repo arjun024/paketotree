@@ -1,0 +1,305 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>paketo tree</title>
+	<meta name="description" content="Explore the paketo tree." />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+	<!-- Hero nav bar   ================================================== -->
+	<div class="navbar navbar-inverse navbar-fixed-top">
+		<div class="navbar-inner">
+			<div class="container">
+				<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="brand" href="" style="padding: 10px 20px 10px !important; margin-left: -20px !important; float: left !important; color: #999 !important; font-weight:normal;">&nbsp;&nbsp;&nbsp;paketo tree</a>
+				<div class="nav-collapse collapse">
+					<ul class="nav" style="float: right;">
+					</ul>
+				</div>
+				<!--/.nav-collapse -->
+			</div>
+		</div>
+	</div>
+	<div class="navbar navbar-inverse navbar-fixed-bottom visible-desktop">
+		<div class="navbar-inner">
+			<div class="container">
+				<div class="active" style="padding: 10px 240px 10px !important; margin-left: -20px !important; float: left !important; color: #999 !important; font-weight:normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+			</div>
+		</div>
+	</div>
+	<!-- ================================================== -->
+	<div class="container-fluid">
+		<div class="topBlock row">
+			<div class="span12 offset3">
+				<div class="form-inline">
+					<!--<input readonly id="inp" class="span7" type="text" autofocus="autofocus" style="display:block;font-size: 17px;" placeholder="Enter something!">-->
+					<select id='select-inp' style='width: 200px;'>
+						<option value='paketo-buildpacks/full-builder'>Full Builder</option>
+						<option value='paketo-buildpacks/base-builder'>Base Builder</option>
+						<option value='paketo-buildpacks/tiny-builder'>Tiny Builder</option>
+						<option value='paketo-buildpacks/dotnet-core'>Dotnet Core</option>
+						<option value='paketo-buildpacks/go'>Go</option>
+						<option value='paketo-buildpacks/java'>Java</option>
+						<option value='paketo-buildpacks/java-native-image'>Java Native Image</option>
+						<option value='paketo-buildpacks/nodejs'>Nodejs</option>
+						<option value='paketo-buildpacks/php'>PHP</option>
+						<option value='paketo-community/python'>Python</option>
+						<option value='paketo-buildpacks/ruby'>Ruby</option>
+					</select>
+					<select style="display: none" id='select-inp-version' style='width: 200px;'>
+						<option value='main'>main</option>
+					</select>
+					<a style="display: none" target="_blank" id="toplink"></a>
+					<button id="firer" class="btn btn-primary" style="margin-left: 5%;"><span>explore</span></button>
+				</div>
+			</div>
+		</div>
+		<div id="showspace"></div>
+	</div>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" />
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+	<style type="text/css">
+	.ui-autocomplete-loading {
+		background: white url('//jqueryui.com/resources/demos/autocomplete/images/ui-anim_basic_16x16.gif') right center no-repeat;
+	}
+
+	body {
+		background-color: #3B5998;
+	}
+
+	.topBlock {
+		margin-top: 14%;
+		margin-bottom: 4%;
+	}
+
+	.list .category {
+		cursor: pointer;
+	}
+
+	.list ul.tree {
+		list-style-type: none;
+	}
+
+	.list ul.tree ul {
+		list-style-type: none;
+		background: url(./images/vline.png) repeat-y;
+		margin: 0;
+		padding: 0;
+	}
+
+	.list ul.tree ul {
+		margin-left: 10px;
+	}
+
+	.list ul.tree li ul {
+		/*position: absolute;*/
+	}
+
+	.list ul.tree li {
+		/*color: #369;*/
+		font-weight: bold;
+		margin-bottom: 2%;
+		background: white;
+		border-radius: 8px;
+		border: 8px white;
+		padding: 10px;
+	}
+
+	.list ul.tree li.article {
+		list-style-type: none;
+		margin: 0;
+		padding: 0 12px;
+		line-height: 20px;
+		background: url(./images/node.png) no-repeat;
+		font-weight: normal;
+		cursor: pointer;
+	}
+
+	a {
+		color: #369;
+		text-decoration: none;
+	}
+
+	a#toplink {
+		background-color: #f44336;
+		color: #FFFFFF;
+		padding: 7px 12px;
+	}
+
+	#showspace {
+		margin-bottom: 10%;
+	}
+	</style>
+	<script type="text/javascript">
+	// api e.g. https://api.github.com/repos/:org/:repo/tags
+	function getAllTags(orgrepo) {
+		apiuri = 'https://api.github.com/repos/' + orgrepo + '/tags'
+		$.getJSON(apiuri, function(data) {
+			$('#select-inp-version .added').remove();
+			$.each(data, function(i, item) {
+				tag = item["name"]
+				$('#select-inp-version').append(`<option class="added" value="${tag}">${tag}</option>`);
+			})
+		});
+		$('#select-inp-version').prop('selectedIndex', 0)
+	}
+	// for builder
+	function populate(tomluri) {
+		var dfd = jQuery.Deferred();
+		if(!tomluri) return;
+		$.get(tomluri, function(data) {
+			var tomldata = toml.parse(data)
+			var torder = tomldata["order"]
+			var aHeading = [];
+			var ajaxSuccessCounter = 0;
+			var blength = tomldata["buildpacks"].length
+			if(!torder || torder.length < 1) {
+				$("#showspace").empty();
+				aHeading.push($('<li class="span' + 3 + ' offset4"><div></div><ul></ul></li>'));
+				return dfd;
+			}
+			var oprinted = []
+			$.each(torder, function(i, oitem) {
+				gr = oitem["group"]
+				$.each(gr, function(ogindex, gitem) {
+					gid = gitem["id"]
+					gver = gitem["version"]
+					glink = 'https://github.com/' + gid + '/tree/v' + gver
+					if(oprinted.includes(glink)) {
+						return true
+					}
+					aHeading.push($('<li class="span' + 3 + '"><div class="category">' + gid + '<a target="_blank" href="' + glink + '"> v' + gver + '</a></div><ul></ul></li>'));
+					oprinted.push(glink);
+					(function(xi) {
+						uri = "https://raw.githubusercontent.com/" + gid + "/v" + gver + "/buildpack.toml"
+						$.get(uri, function(data) {
+							ajaxSuccessCounter++;
+							var tomldata = toml.parse(data)
+							var order = tomldata["order"]
+							if(order) {
+								var printed = []
+								$.each(order, function(oindex, orderitem) {
+									group = orderitem["group"]
+									$.each(group, function(gindex, groupitem) {
+										id = groupitem["id"]
+										ver = groupitem["version"]
+										link = 'https://github.com/' + id + '/tree/v' + ver
+										if(printed.includes(link)) {
+											return true
+										}
+										aHeading[xi].find('ul').append($('<li class="article">' + id + '<a target="_blank" href="' + link + '"> v' + ver + '</a></li>'));
+										printed.push(link)
+									});
+								});
+							}
+							ajaxSuccessCounter == blength ? dfd.resolve() : null;
+						});
+					})(i)
+				})
+			})
+			$("#showspace").empty().append($('<div class="list row-fluid"><ul class="tree"></ul></div>'));
+			$("#showspace>div>ul").append(aHeading);
+		});
+		return dfd;
+	}
+	// for buildpack
+	// this crap 90% of duplicate of above func coz whatever
+	function populate2(tomluri) {
+		var dfd = jQuery.Deferred();
+		if(!tomluri) return;
+		$.get(tomluri, function(data) {
+			var aHeading = [];
+			var tomldata = toml.parse(data)
+			var order = tomldata["order"]
+			if(order) {
+				printed = []
+				$.each(order, function(oindex, orderitem) {
+					group = orderitem["group"]
+					$.each(group, function(gindex, groupitem) {
+						id = groupitem["id"]
+						ver = groupitem["version"]
+						link = 'https://github.com/' + id + '/tree/v' + ver
+						if(printed.includes(link)) {
+							return true
+						}
+						aHeading.push($('<li class="span' + 3 + '"><div class="category">' + id + '<a target="_blank" href="' + link + '"> v' + ver + '</a></div><ul></ul></li>'));
+						printed.push(link)
+					});
+				});
+			}
+			dfd.resolve()
+			$("#showspace").empty().append($('<div class="list row-fluid"><ul class="tree"></ul></div>'));
+			$("#showspace>div>ul").append(aHeading);
+		});
+		return dfd;
+	}
+	$(function() {
+		$("#firer").on("click", function() {
+			var selected = $('#select-inp').find(":selected").val();
+			if(selected) {
+				var selectedver = $('#select-inp-version').find(":selected").val();
+				if(selectedver == "main") {
+					getAllTags(selected)
+				}
+				tomlpath = '/buildpack.toml'
+				populateFunc = populate2
+				if(selected.endsWith("builder")) {
+					tomlpath = '/builder.toml'
+					populateFunc = populate
+				}
+				selecteduri = 'https://raw.githubusercontent.com/' + selected + '/' + selectedver + tomlpath
+				$('#select-inp-version').show();
+				populateFunc(selecteduri).always(function() {
+					$(".category").siblings().slideUp();
+					$(".list ul.tree>li>ul>li:last-child").css("background", "#fff url(./images/lastnode.png) no-repeat");
+				});
+				$('a#toplink').attr("href", "https://github.com/" + selected + "/tree/" + selectedver).text("link").show();
+				$(".topBlock").animate({
+					'margin-top': '5%'
+				}, 1000);
+				//window.location.hash = encodeURIComponent(selected);
+			}
+		});
+
+		$('#select-inp').on('change', function() {
+			var selected = $('#select-inp').find(":selected").val();
+			getAllTags(selected)
+			$("#showspace").empty()
+			$('a#toplink').hide()
+		});
+		$('#select-inp-version').on('change', function() {
+			$("#showspace").empty()
+			$('a#toplink').hide()
+			$("#firer").click();
+		});
+		$(document).on("click", ".category", function() {
+			$(this).siblings().slideToggle();
+		});
+		/*if(window.location.hash){
+			$("#select-inp").val(decodeURIComponent(window.location.hash.substring(1)));
+			$("#firer").click();
+		}*/
+		/*$(window).on('hashchange', function(e) {
+			if(window.location.hash){
+				$("#inp").val(decodeURIComponent(window.location.hash.substring(1)));
+				$("#firer").click();
+			}
+		});*/
+		$(window).resize(function() {
+			$(window).width() < 1450 ? $("#firstbox").removeClass("offset4").addClass("offset3") : $("#firstbox").removeClass("offset3").addClass("offset4")
+		});
+	});
+	</script>
+	<script src="./toml-j0.4/toml-browser.js"></script>
+	<script src="//code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+	<script src="//static.tumblr.com/gltvynn/oaPmk2vcg/bootstrap.min.js" type="text/javascript"></script>
+</body>
+
+</html>
