@@ -62,9 +62,9 @@
 		</div>
 		<div id="showspace"></div>
 	</div>
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" />
-	<link rel="stylesheet" href="//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" />
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
 	<style type="text/css">
 	.ui-autocomplete-loading {
 		background: white url('//jqueryui.com/resources/demos/autocomplete/images/ui-anim_basic_16x16.gif') right center no-repeat;
@@ -150,8 +150,18 @@
 		});
 		$('#select-inp-version').prop('selectedIndex', 0)
 	}
+	function getapiversion(elid, id, version) {
+		var uri = "https://raw.githubusercontent.com/" + id + "/v" + ver + "/buildpack.toml"
+		$.get(uri, function(data) {
+			var tomldata = toml.parse(data);
+			var api = tomldata["api"];
+			(function(r) { $('#' + r).text('api ' + api); })(elid);
+		});
+	}
 	// for builder
 	function populate(tomluri) {
+		var x = 0;
+		var y = 0;
 		var dfd = jQuery.Deferred();
 		if(!tomluri) return;
 		$.get(tomluri, function(data) {
@@ -175,14 +185,17 @@
 					if(oprinted.includes(glink)) {
 						return true
 					}
-					aHeading.push($('<li class="span' + 3 + '"><div class="category">' + gid + '<a target="_blank" href="' + glink + '"> v' + gver + '</a></div><ul></ul></li>'));
+					var randid = "abc" + x++;
+					aHeading.push($('<li class="span' + 3 + '"><div class="category">' + gid + '<a target="_blank" href="' + glink + '"> v' + gver + '</a><sup id=' + randid + '></sup></div><ul></ul></li>'));
 					oprinted.push(glink);
 					(function(xi) {
 						uri = "https://raw.githubusercontent.com/" + gid + "/v" + gver + "/buildpack.toml"
 						$.get(uri, function(data) {
 							ajaxSuccessCounter++;
-							var tomldata = toml.parse(data)
-							var order = tomldata["order"]
+							var tomldata = toml.parse(data);
+							var order = tomldata["order"];
+							var api = tomldata["api"];
+							(function(r) { $('#' + r).text('api ' + api); })(randid);
 							if(order) {
 								var printed = []
 								$.each(order, function(oindex, orderitem) {
@@ -194,8 +207,10 @@
 										if(printed.includes(link)) {
 											return true
 										}
-										aHeading[xi].find('ul').append($('<li class="article">' + id + '<a target="_blank" href="' + link + '"> v' + ver + '</a></li>'));
+										var rdid = "xyz" + y++;
+										aHeading[xi].find('ul').append($('<li class="article">' + id + '<a target="_blank" href="' + link + '"> v' + ver + '</a><sup id=' + rdid + '></sup></li>'));
 										printed.push(link)
+										getapiversion(rdid, id, ver);
 									});
 								});
 							}
@@ -212,6 +227,7 @@
 	// for buildpack
 	// this crap 90% of duplicate of above func coz whatever
 	function populate2(tomluri) {
+		var z = 0;
 		var dfd = jQuery.Deferred();
 		if(!tomluri) return;
 		$.get(tomluri, function(data) {
@@ -229,8 +245,10 @@
 						if(printed.includes(link)) {
 							return true
 						}
-						aHeading.push($('<li class="span' + 3 + '"><div class="category">' + id + '<a target="_blank" href="' + link + '"> v' + ver + '</a></div><ul></ul></li>'));
+						var rpdid = "pqr" + z++;
+						aHeading.push($('<li class="span' + 3 + '"><div class="category">' + id + '<a target="_blank" href="' + link + '"> v' + ver + '</a><sup id=' + rpdid + '></sup></div><ul></ul></li>'));
 						printed.push(link)
+						getapiversion(rpdid, id, ver);
 					});
 				});
 			}
@@ -298,8 +316,8 @@
 	});
 	</script>
 	<script src="./toml-j0.4/toml-browser.js"></script>
-	<script src="//code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-	<script src="//static.tumblr.com/gltvynn/oaPmk2vcg/bootstrap.min.js" type="text/javascript"></script>
+	<script src="https://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+	<script src="https://static.tumblr.com/gltvynn/oaPmk2vcg/bootstrap.min.js" type="text/javascript"></script>
 </body>
 
 </html>
