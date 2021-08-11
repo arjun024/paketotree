@@ -57,6 +57,7 @@
 					</select>
 					<a style="display: none" target="_blank" id="toplink"></a>
 					<button id="firer" class="btn btn-primary" style="margin-left: 5%;"><span>explore</span></button>
+					<button id="expcoll" class="btn" style="margin-left: 20%;display: none"><span>expand/collapse</span></button>
 				</div>
 			</div>
 		</div>
@@ -274,6 +275,7 @@
 				}
 				selecteduri = 'https://raw.githubusercontent.com/' + selected + '/' + selectedver + tomlpath
 				$('#select-inp-version').show();
+				$('#expcoll').show();
 				populateFunc(selecteduri).always(function() {
 					$(".category").siblings().slideUp();
 					$(".list ul.tree>li>ul>li:last-child").css("background", "#fff url(./images/lastnode.png) no-repeat");
@@ -299,6 +301,9 @@
 		});
 		$(document).on("click", ".category", function() {
 			$(this).siblings().slideToggle();
+		});
+		$('#expcoll').on('click', function() {
+			$(".category").click();
 		});
 		/*if(window.location.hash){
 			$("#select-inp").val(decodeURIComponent(window.location.hash.substring(1)));
